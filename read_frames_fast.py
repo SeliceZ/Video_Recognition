@@ -20,8 +20,10 @@ import imutils
 import time
 import cv2
 
+import os
+
 class FileVideoStream:
-  def __init__(self, path, queueSize=128):
+  def __init__(self, path, queueSize=8):
 		# initialize the file video stream along with the boolean
 		# used to indicate if the thread should be stopped or not
     self.stream = cv2.VideoCapture(path)
@@ -81,42 +83,44 @@ args = vars(ap.parse_args())
 print("[INFO] starting video file thread...")
 fvs = FileVideoStream(args["video"]).start()
 
-# We need to set resolutions.
-# so, convert them from float to integer.
-# frame = fvs.read()
-# frame = imutils.resize(frame, width=450)
-# frame_height = int(frame.get(4))
    
-size = (450, 450)
+size = (128, 128)
 # Below VideoWriter object will create
 # a frame of above defined The output 
 # is stored in 'trial.avi' file.
-output_filename = '/Users/zhongqian/Desktop/CS/'+args["video"].split('/')[-1]
-result = cv2.VideoWriter(output_filename, 
-                         cv2.VideoWriter_fourcc(*'MJPG'),
-                         10, size)
+video_name = '/Users/zhongqian/Desktop/CS/'+args["video"].split('/')[-1]
+video_name = video_name[:-4]
+print(video_name)
+# result = cv2.VideoWriter(video_name, 
+#                          cv2.VideoWriter_fourcc(*'MJPG'),
+#                          10, size)
+
+# Create the directory
+os.mkdir(video_name)
 
 time.sleep(1.0)
 # start the FPS timer
 fps = FPS().start()
 
 # loop over frames from the video file stream
+counter = 0
 while fvs.more():
 	# grab the frame from the threaded video file stream, resize
 	# it, and convert it to grayscale (while still retaining 3
 	# channels)
     frame = fvs.read()
-    frame = imutils.resize(frame, width=450)
+    frame = imutils.resize(frame, width=128,height=128)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     frame = np.dstack([frame, frame, frame])
-    result.write(frame)
-	# display the size of the queue on the frame
-	# cv2.putText(frame, "Queue Size: {}".format(fvs.Q.qsize()),
-	# 	(10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)	
+    # Using cv2.imwrite() method
+    # Saving the image
+    filename = video_name+'/'+'frame'+str(counter)+'.jpg'
+    cv2.imwrite(filename, frame)	
 	# show the frame and update the FPS counter
     cv2.imshow("Frame", frame)
     cv2.waitKey(1)
     fps.update()
+    counter+=1
     
 
 
@@ -127,4 +131,4 @@ print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 # do a bit of cleanup
 cv2.destroyAllWindows()
 fvs.stop()
-result.release() 
+
